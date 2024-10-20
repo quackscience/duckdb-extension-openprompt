@@ -6,7 +6,7 @@ namespace duckdb {
 
 using HeaderMap = case_insensitive_map_t<string>;
 
-class HttpClientExtension : public Extension {
+class OpenPromptExtension : public Extension {
 public:
     void Load(DuckDB &db) override;
     std::string Name() override;

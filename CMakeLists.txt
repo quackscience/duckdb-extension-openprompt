@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # Set extension name here
-set(TARGET_NAME http_client)
+set(TARGET_NAME open_prompt)
 
 # DuckDB's extension distribution supports vcpkg. As such, dependencies can be added in ./vcpkg.json and then
 # used in cmake with find_package. Feel free to remove or replace with other dependencies.
@@ -14,7 +14,7 @@ set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
 project(${TARGET_NAME})
 include_directories(src/include duckdb/third_party/httplib)
 
-set(EXTENSION_SOURCES src/http_client_extension.cpp)
+set(EXTENSION_SOURCES src/open_prompt_extension.cpp)
 
 if(MINGW)
   set(OPENSSL_USE_STATIC_LIBS TRUE)
