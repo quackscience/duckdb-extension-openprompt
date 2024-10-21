@@ -15,7 +15,7 @@ SELECT set_api_url('http://localhost:11434/v1/chat/completions');
 ```
 
 ### Usage
-```
+```sql
 D SELECT open_prompt('Write a one-line poem about ducks', 'qwen2.5:0.5b') AS response;
 ┌────────────────────────────────────────────────┐
 │                    response                    │
