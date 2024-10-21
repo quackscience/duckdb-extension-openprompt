@@ -24,3 +24,20 @@ D SELECT open_prompt('Write a one-line poem about ducks', 'qwen2.5:0.5b') AS res
 │ Ducks quacking at dawn, swimming in the light. │
 └────────────────────────────────────────────────┘
 ```
+
+<br>
+
+<img src="https://github.com/user-attachments/assets/824bfab2-aca6-4bd9-8a4a-bc01901fcd5b" width=100 />
+
+### Ollama self-hosted
+Test the open_prompt extension using a local or remote Ollama with Completions API
+
+#### CPU only
+```
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+```
+#### Nvidia GPU
+Install the Nvidia container toolkit. Run Ollama inside a Docker container
+```
+docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+```
