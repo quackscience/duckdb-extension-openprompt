@@ -12,5 +12,15 @@ This very experimental extension to query OpenAI compatible API endpoints such a
 ```sql
 SELECT set_api_token('your_api_key_here');
 SELECT set_api_url('http://localhost:11434/v1/chat/completions');
-SELECT set_model_name('llama2');
+```
+
+### Usage
+```
+D SELECT open_prompt('Write a one-line poem about ducks', 'qwen2.5:0.5b') AS response;
+┌────────────────────────────────────────────────┐
+│                    response                    │
+│                    varchar                     │
+├────────────────────────────────────────────────┤
+│ Ducks quacking at dawn, swimming in the light. │
+└────────────────────────────────────────────────┘
 ```
