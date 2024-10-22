@@ -94,8 +94,8 @@ static void HandleHttpError(const duckdb_httplib_openssl::Result &res, const std
 // Global settings
     static std::string api_url = "http://localhost:11434/v1/chat/completions";
     static std::string api_token = "";  // Store your API token here
-    static std::string model_name = "llama2";  // Default model
-    static std::mutex settings_mutex;  // Mutex for protecting global settings
+    static std::string model_name = "qwen2.5:0.5b";  // Default model
+    static std::mutex settings_mutex;
 
     // Function to set API token
     void SetApiToken(const std::string &token) {
@@ -142,7 +142,7 @@ static void HandleHttpError(const duckdb_httplib_openssl::Result &res, const std
     // Retrieve the model name from the stored settings
     static std::string GetModelName() {
         std::lock_guard<std::mutex> guard(settings_mutex);
-        return model_name.empty() ? "llama2" : model_name;
+        return model_name.empty() ? "qwen2.5:0.5b" : model_name;
     }
 
 // Open Prompt Function
@@ -161,7 +161,7 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
                 model_name = GetModelName();  // Use the default model if none is provided
             }
 
-            // Manually construct the JSON body as a string
+            // Manually construct the JSON body as a string. TODO use json parser from extension.
             std::string request_body = "{";
             request_body += "\"model\":\"" + model_name + "\",";
             request_body += "\"messages\":[";
