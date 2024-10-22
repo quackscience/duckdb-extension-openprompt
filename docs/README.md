@@ -6,7 +6,10 @@ This very experimental extension to query OpenAI compatible API endpoints such a
 > Experimental: USE AT YOUR OWN RISK!
 
 ### Functions
-- `open_prompt()`
+- `open_prompt(prompt, model)`
+- `set_api_token(auth_token)`
+- `set_api_url(completions_url)`
+- `set_model_name(model_name)`
 
 ### Settings
 ```sql
