@@ -90,60 +90,10 @@ static void HandleHttpError(const duckdb_httplib_openssl::Result &res, const std
 }
 
 
-// Open Prompt
 // Global settings
-    static std::string api_url = "http://localhost:11434/v1/chat/completions";
-    static std::string api_token = "";  // Store your API token here
-    static std::string model_name = "qwen2.5:0.5b";  // Default model
-    static std::mutex settings_mutex;
-
-    // Function to set API token
-    void SetApiToken(const std::string &token) {
-        std::lock_guard<std::mutex> guard(settings_mutex);
-        if (token.empty()) {
-            throw std::invalid_argument("API token cannot be empty.");
-        }
-        api_token = token;
-        std::cerr << "API token set to: " << api_token << std::endl;  // Debugging output
-    }
-
-    // Function to set API URL
-    void SetApiUrl(const std::string &url) {
-        std::lock_guard<std::mutex> guard(settings_mutex);
-        if (url.empty()) {
-            throw std::invalid_argument("URL cannot be empty.");
-        }
-        api_url = url;
-        std::cerr << "API URL set to: " << api_url << std::endl;  // Debugging output
-    }
-
-    // Function to set model name
-    void SetModelName(const std::string &model) {
-        std::lock_guard<std::mutex> guard(settings_mutex);
-        if (model.empty()) {
-            throw std::invalid_argument("Model name cannot be empty.");
-        }
-        model_name = model;
-        std::cerr << "Model name set to: " << model_name << std::endl;  // Debugging output
-    }
-
-    // Retrieve the API URL from the stored settings
-    static std::string GetApiUrl() {
-        std::lock_guard<std::mutex> guard(settings_mutex);
-        return api_url.empty() ? "http://localhost:11434/v1/chat/completions" : api_url;
-    }
-
-    // Retrieve the API token from the stored settings
-    static std::string GetApiToken() {
-        std::lock_guard<std::mutex> guard(settings_mutex);
-        return api_token;
-    }
-
-    // Retrieve the model name from the stored settings
-    static std::string GetModelName() {
-        std::lock_guard<std::mutex> guard(settings_mutex);
-        return model_name.empty() ? "qwen2.5:0.5b" : model_name;
-    }
+static constexpr const char* TOKEN_VAR = "";
+static constexpr const char* URL_VAR = "http://localhost:11434/v1/chat/completions";
+static constexpr const char* MODEL_VAR = "qwen2.5:0.5b";
 
 // Open Prompt Function
 static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, Vector &result) {
@@ -159,7 +109,7 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
                 if (context.TryGetCurrentSetting("open_prompt_url", url_value)) {
                     api_url = url_value.ToString();
                 } else {
-                    api_url = "http://localhost:11434/v1/chat/completions";
+                    api_url = URL_VAR;
                 }
 
                 Value token_value;
@@ -177,7 +127,7 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
                     if (context.TryGetCurrentSetting("open_prompt_model", model_value)) {
                         model_name = model_value.ToString();
                     } else {
-                        model_name = "qwen2.5:0.5b";
+                        model_name = MODEL_VAR;
                     }
                 }
 
