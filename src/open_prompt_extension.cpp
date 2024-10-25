@@ -13,10 +13,19 @@
 #include <string>
 #include <sstream>
 #include <mutex>
-#include <iostream> 
+#include <iostream>
+#include <yyjson.hpp>
 
 
 namespace duckdb {
+    struct OpenPromptData: FunctionData {
+        unique_ptr<FunctionData> Copy() const {
+            throw std::runtime_error("OpenPromptData::Copy");
+        };
+        bool Equals(const FunctionData &other) const {
+            throw std::runtime_error("OpenPromptData::Equals");
+        };
+    };
 
 // Helper function to parse URL and setup client
 static std::pair<duckdb_httplib_openssl::Client, std::string> SetupHttpClient(const std::string &url) {
@@ -93,38 +102,71 @@ static void HandleHttpError(const duckdb_httplib_openssl::Result &res, const std
 // Open Prompt
 // Global settings
     static std::string api_url = "http://localhost:11434/v1/chat/completions";
-    static std::string api_token = "";  // Store your API token here
+    static std::string api_token;  // Store your API token here
     static std::string model_name = "qwen2.5:0.5b";  // Default model
     static std::mutex settings_mutex;
 
     // Function to set API token
-    void SetApiToken(const std::string &token) {
-        std::lock_guard<std::mutex> guard(settings_mutex);
-        if (token.empty()) {
-            throw std::invalid_argument("API token cannot be empty.");
-        }
-        api_token = token;
-        std::cerr << "API token set to: " << api_token << std::endl;  // Debugging output
+    void SetApiToken(DataChunk &args, ExpressionState &state, Vector &result) {
+        UnaryExecutor::Execute<string_t, string_t>(args.data[0], result, args.size(),
+        [&](string_t token) {
+            try {
+                auto _token = token.GetData();
+                if (token.Empty()) {
+                    throw std::invalid_argument("API token cannot be empty.");
+                }
+                ClientConfig::GetConfig(state.GetContext()).SetUserVariable(
+                    "openprompt_api_token",
+                    Value::CreateValue(token.GetString()));
+                return StringVector::AddString(result, string("token : ") + string(_token, token.GetSize()));
+            } catch (std::exception &e) {
+                string_t res(e.what());
+                res.Finalize();
+                return res;
+            }
+        });
     }
 
     // Function to set API URL
-    void SetApiUrl(const std::string &url) {
-        std::lock_guard<std::mutex> guard(settings_mutex);
-        if (url.empty()) {
-            throw std::invalid_argument("URL cannot be empty.");
-        }
-        api_url = url;
-        std::cerr << "API URL set to: " << api_url << std::endl;  // Debugging output
+    void SetApiUrl(DataChunk &args, ExpressionState &state, Vector &result) {
+        UnaryExecutor::Execute<string_t, string_t>(args.data[0], result, args.size(),
+        [&](string_t token) {
+            try {
+                auto _token = token.GetData();
+                if (token.Empty()) {
+                    throw std::invalid_argument("API token cannot be empty.");
+                }
+                ClientConfig::GetConfig(state.GetContext()).SetUserVariable(
+                    "openprompt_api_url",
+                    Value::CreateValue(token.GetString()));
+                return StringVector::AddString(result, string("url : ") + string(_token, token.GetSize()));
+            } catch (std::exception &e) {
+                string_t res(e.what());
+                res.Finalize();
+                return res;
+            }
+        });
     }
 
     // Function to set model name
-    void SetModelName(const std::string &model) {
-        std::lock_guard<std::mutex> guard(settings_mutex);
-        if (model.empty()) {
-            throw std::invalid_argument("Model name cannot be empty.");
-        }
-        model_name = model;
-        std::cerr << "Model name set to: " << model_name << std::endl;  // Debugging output
+    void SetModelName(DataChunk &args, ExpressionState &state, Vector &result) {
+        UnaryExecutor::Execute<string_t, string_t>(args.data[0], result, args.size(),
+        [&](string_t token) {
+         try {
+             auto _token = token.GetData();
+             if (token.Empty()) {
+                 throw std::invalid_argument("API token cannot be empty.");
+             }
+             ClientConfig::GetConfig(state.GetContext()).SetUserVariable(
+                 "openprompt_model_name",
+                 Value::CreateValue(token.GetString()));
+             return StringVector::AddString(result, string("name : ") + string(_token, token.GetSize()));
+         } catch (std::exception &e) {
+             string_t res(e.what());
+             res.Finalize();
+             return res;
+         }
+        });
     }
 
     // Retrieve the API URL from the stored settings
@@ -145,25 +187,28 @@ static void HandleHttpError(const duckdb_httplib_openssl::Result &res, const std
         return model_name.empty() ? "qwen2.5:0.5b" : model_name;
     }
 
+    template<typename a> a assert_null(a val) {
+        if (val == nullptr) {
+            throw std::runtime_error("Failed to parse the first message content in the API response.");
+        }
+        return val;
+    }
 // Open Prompt Function
 static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, Vector &result) {
-    D_ASSERT(args.data.size() == 2); // Expecting the prompt and model name
-
     UnaryExecutor::Execute<string_t, string_t>(args.data[0], result, args.size(),
         [&](string_t user_prompt) {
-            std::string api_url = GetApiUrl();  // Retrieve the API URL from settings
-            std::string api_token = GetApiToken();  // Retrieve the API Token from settings
-            std::string model_name;
-
-            if (!args.data[1].GetValue(0).IsNull()) {
-                model_name = args.data[1].GetValue(0).ToString();  // Use passed model name
-            } else {
-                model_name = GetModelName();  // Use the default model if none is provided
-            }
+            duckdb_yyjson::yyjson_doc *doc = nullptr;
+            auto &conf = ClientConfig::GetConfig(state.GetContext());
+            Value api_url;
+            Value api_token;
+            Value model_name;
+            conf.GetUserVariable("openprompt_api_url", api_url);
+            conf.GetUserVariable("openprompt_api_token", api_token);
+            conf.GetUserVariable("openprompt_model_name", model_name);
 
             // Manually construct the JSON body as a string. TODO use json parser from extension.
             std::string request_body = "{";
-            request_body += "\"model\":\"" + model_name + "\",";
+            request_body += "\"model\":\"" + model_name.ToString() + "\",";
             request_body += "\"messages\":[";
             request_body += "{\"role\":\"system\",\"content\":\"You are a helpful assistant.\"},";
             request_body += "{\"role\":\"user\",\"content\":\"" + user_prompt.GetString() + "\"}";
@@ -171,15 +216,15 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
 
             try {
                 // Make the POST request
-                auto client_and_path = SetupHttpClient(api_url);
+                auto client_and_path = SetupHttpClient(api_url.ToString());
                 auto &client = client_and_path.first;
                 auto &path = client_and_path.second;
 
                 // Setup headers
                 duckdb_httplib_openssl::Headers header_map;
                 header_map.emplace("Content-Type", "application/json");
-                if (!api_token.empty()) {
-                    header_map.emplace("Authorization", "Bearer " + api_token);
+                if (!api_token.ToString().empty()) {
+                    header_map.emplace("Authorization", "Bearer " + api_token.ToString());
                 }
 
                 // Send the request
@@ -187,26 +232,20 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
                 if (res && res->status == 200) {
                     // Extract the first choice's message content from the response
                     std::string response_body = res->body;
-                    size_t choices_pos = response_body.find("\"choices\":");
-                    if (choices_pos != std::string::npos) {
-                        size_t message_pos = response_body.find("\"message\":", choices_pos);
-                        size_t content_pos = response_body.find("\"content\":\"", message_pos);
-                        if (content_pos != std::string::npos) {
-                            content_pos += 11; // Move to the start of the content value
-                            size_t content_end = response_body.find("\"", content_pos);
-                            if (content_end != std::string::npos) {
-                                std::string first_message_content = response_body.substr(content_pos, content_end - content_pos);
-                                return StringVector::AddString(result, first_message_content);
-                            }
-                        }
-                    }
-                    throw std::runtime_error("Failed to parse the first message content in the API response.");
-                } else {
-                    throw std::runtime_error("HTTP POST error: " + std::to_string(res->status) + " - " + res->reason);
+                    doc = duckdb_yyjson::yyjson_read(
+                        response_body.c_str(), response_body.length(), 0);
+                    auto root = assert_null(duckdb_yyjson::yyjson_doc_get_root(doc));
+                    auto choices = assert_null(duckdb_yyjson::yyjson_obj_get(root, "choices"));
+                    auto choices_0 = assert_null(duckdb_yyjson::yyjson_arr_get_first(choices));
+                    auto message = assert_null(duckdb_yyjson::yyjson_obj_get(choices_0, "message"));
+                    auto content = assert_null(duckdb_yyjson::yyjson_obj_get(message, "content"));
+                    auto c_content = assert_null(duckdb_yyjson::yyjson_get_str(content));
+                    return StringVector::AddString(result, c_content);
                 }
+                throw std::runtime_error("HTTP POST error: " + std::to_string(res->status) + " - " + res->reason);
             } catch (std::exception &e) {
                 // In case of any error, return the original input text to avoid disruption
-                return StringVector::AddString(result, user_prompt);
+                return StringVector::AddString(result, e.what());
             }
         });
 }
@@ -216,45 +255,21 @@ static void LoadInternal(DatabaseInstance &instance) {
     // Register open_prompt function with two arguments: prompt and model
     ScalarFunctionSet open_prompt("open_prompt");
     open_prompt.AddFunction(ScalarFunction(
-        {LogicalType::VARCHAR, LogicalType::VARCHAR}, LogicalType::VARCHAR, OpenPromptRequestFunction));
+        {LogicalType::VARCHAR}, LogicalType::VARCHAR, OpenPromptRequestFunction));
     ExtensionUtil::RegisterFunction(instance, open_prompt);
 
     // Other set_* functions remain the same as before
     ExtensionUtil::RegisterFunction(instance, ScalarFunction(
         "set_api_token", {LogicalType::VARCHAR}, LogicalType::VARCHAR,
-        [](DataChunk &args, ExpressionState &state, Vector &result) {
-            try {
-                auto token = args.data[0].GetValue(0).ToString();
-                SetApiToken(token);
-                return StringVector::AddString(result, "API token set successfully.");
-            } catch (std::exception &e) {
-                return StringVector::AddString(result, "Failed to set API token: " + std::string(e.what()));
-            }
-        }));
+        SetApiToken));
 
     ExtensionUtil::RegisterFunction(instance, ScalarFunction(
         "set_api_url", {LogicalType::VARCHAR}, LogicalType::VARCHAR,
-        [](DataChunk &args, ExpressionState &state, Vector &result) {
-            try {
-                auto new_url = args.data[0].GetValue(0).ToString();
-                SetApiUrl(new_url);
-                return StringVector::AddString(result, "API URL set successfully.");
-            } catch (std::exception &e) {
-                return StringVector::AddString(result, "Failed to set API URL: " + std::string(e.what()));
-            }
-        }));
+        SetApiUrl));
 
     ExtensionUtil::RegisterFunction(instance, ScalarFunction(
-        "set_model_name", {LogicalType::VARCHAR}, LogicalType::VARCHAR,
-        [](DataChunk &args, ExpressionState &state, Vector &result) {
-            try {
-                auto model = args.data[0].GetValue(0).ToString();
-                SetModelName(model);
-                return StringVector::AddString(result, "Model name set successfully.");
-            } catch (std::exception &e) {
-                return StringVector::AddString(result, "Failed to set model name: " + std::string(e.what()));
-            }
-        }));
+        "set_model_name", {LogicalType::VARCHAR}, LogicalType::VARCHAR, SetModelName
+        ));
 }
 
 
