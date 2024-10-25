@@ -197,7 +197,6 @@ static void HandleHttpError(const duckdb_httplib_openssl::Result &res, const std
 static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, Vector &result) {
     UnaryExecutor::Execute<string_t, string_t>(args.data[0], result, args.size(),
         [&](string_t user_prompt) {
-            duckdb_yyjson::yyjson_doc *doc = nullptr;
             auto &conf = ClientConfig::GetConfig(state.GetContext());
             Value api_url;
             Value api_token;
@@ -232,9 +231,13 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
                 if (res && res->status == 200) {
                     // Extract the first choice's message content from the response
                     std::string response_body = res->body;
-                    doc = duckdb_yyjson::yyjson_read(
-                        response_body.c_str(), response_body.length(), 0);
-                    auto root = assert_null(duckdb_yyjson::yyjson_doc_get_root(doc));
+                    unique_ptr<duckdb_yyjson::yyjson_doc, void(*)(struct duckdb_yyjson::yyjson_doc *)> doc(
+                        nullptr, &duckdb_yyjson::yyjson_doc_free
+                        );
+                    doc.reset(assert_null(
+                            duckdb_yyjson::yyjson_read(response_body.c_str(), response_body.length(), 0)
+                            ));
+                    auto root = assert_null(duckdb_yyjson::yyjson_doc_get_root(doc.get()));
                     auto choices = assert_null(duckdb_yyjson::yyjson_obj_get(root, "choices"));
                     auto choices_0 = assert_null(duckdb_yyjson::yyjson_arr_get_first(choices));
                     auto message = assert_null(duckdb_yyjson::yyjson_obj_get(choices_0, "message"));
