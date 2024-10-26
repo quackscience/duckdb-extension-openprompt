@@ -33,11 +33,24 @@ D SELECT open_prompt('Write a one-line poem about ducks') AS response;
 ```
 
 #### JSON Structured Output _(very experimental)_
-Define a `json_schema` to receive a structured response in JSON format... most of the time. Prompt based. Output depends on model skills.
+Define a `json_schema` to receive a structured response in JSON format... most of the time. 
+
+```javascript
+{
+    summary: 'VARCHAR',
+    favourite_animals:='VARCHAR[]',
+    favourite_activity:='VARCHAR[]',
+    star_rating:='INTEGER'},
+    struct_descr:={star_rating: 'rating on a scale from 1 (bad) to 5 (very good)'
+}
+```
+
+Prompt based. Output depends on model skills.
 
 ```sql
+SET VARIABLE openprompt_model_name = 'qwen2.5:1.5b';
 D SET VARIABLE openprompt_json_schema = "struct:={summary: 'VARCHAR', favourite_animals:='VARCHAR[]', favourite_activity:='VARCHAR[]', star_rating:='INTEGER'}, struct_descr:={star_rating: 'visit rating on a scale from 1 (bad) to 5 (very good)'}";
-D SELECT open_prompt('My zoo visit was fun and I loved the bears and tigets. i also had icecream') AS response;
+D SELECT open_prompt('My zoo visit was fun and I loved the bears and tigers. i also had icecream') AS response;
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                                        response                                                                         │
 │                                                                         varchar                                                                         │
@@ -46,9 +59,11 @@ D SELECT open_prompt('My zoo visit was fun and I loved the bears and tigets. i a
 └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+The results can be validated and parsed with the DuckDB `JSON` extension and its functions
+
 ```sql
 D LOAD json;                                      ^
-D WITH response AS (SELECT open_prompt('My zoo visit was fun and I loved the bears and tigets. i also had icecream') AS response) SELECT json_structure(response) FROM response;
+D WITH response AS (SELECT open_prompt('My zoo visit was fun and I loved the bears and tigers. i also had icecream') AS response) SELECT json_structure(response) FROM response;
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                          json_structure(response)                                          │
 │                                                    json                                                    │
