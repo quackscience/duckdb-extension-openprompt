@@ -31,6 +31,50 @@ D SELECT open_prompt('Write a one-line poem about ducks') AS response;
 └────────────────────────────────────────────────┘
 ```
 
+#### JSON Structured Output
+For supported models you can request structured JSON output by providing a schema. 
+
+```sql
+SET VARIABLE openprompt_api_url = 'http://localhost:11434/v1/chat/completions';
+SET VARIABLE openprompt_api_token = 'your_api_key_here';
+SET VARIABLE openprompt_model_name = 'llama3.2:3b';
+
+SELECT open_prompt('I want ice cream', json_schema := '{
+       "type": "object",
+       "properties": {
+         "summary": { "type": "string" },
+         "sentiment": { "type": "string", "enum": ["pos", "neg", "neutral"] }
+       },
+       "required": ["summary", "sentiment"],
+       "additionalProperties": false
+     }');
+```
+
+> For smaller models, the schema is injected in the promp in _best-effort_ mode
+
+```sql
+SELECT open_prompt('I want ice cream', json_schema := '{
+       "type": "object",
+       "properties": {
+            summary: 'VARCHAR',
+            favourite_animals:='VARCHAR[]',
+            favourite_activity:='VARCHAR[]',
+            star_rating:='INTEGER'},
+            struct_descr:={star_rating: 'rating on a scale from 1 (bad) to 5 (very good)'}
+        ');
+
+D SELECT open_prompt('My zoo visit was fun and I loved the bears and tigers. i also had icecream') AS response;
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ response │
+│ varchar │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ {"summary": "A short summary of your recent zoo visit activity.", "favourite_animals": ["bears", "tigers"], "favourite_activity": ["icecream"], "star … │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+```
+
+
+
 <br>
 
 <img src="https://github.com/user-attachments/assets/824bfab2-aca6-4bd9-8a4a-bc01901fcd5b" width=100 />
