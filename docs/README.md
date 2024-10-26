@@ -10,12 +10,13 @@ Simple extension to query OpenAI Completion API endpoints such as Ollama
 - `set_api_token(auth_token)`
 - `set_api_url(completions_url)`
 - `set_model_name(model_name)`
+- `set_json_schema(json_schema)`
 
 ### Settings
 Setup the completions API configuration w/ optional auth token and model name
 ```sql
 SET VARIABLE openprompt_api_url = 'http://localhost:11434/v1/chat/completions';
-SET VARIABLE openprompt_api_token = 'your_api_key_here';
+SET VARIABLE openprompt_api_token = 'optional_api_key_here';
 SET VARIABLE openprompt_model_name = 'qwen2.5:0.5b';
 
 ```
@@ -29,6 +30,31 @@ D SELECT open_prompt('Write a one-line poem about ducks') AS response;
 ├────────────────────────────────────────────────┤
 │ Ducks quacking at dawn, swimming in the light. │
 └────────────────────────────────────────────────┘
+```
+
+#### JSON Structured Output _(very experimental)_
+Define a `json_schema` to receive a structured response in JSON format... most of the time. Prompt based. Output depends on model skills.
+
+```sql
+D SET VARIABLE openprompt_json_schema = "struct:={summary: 'VARCHAR', favourite_animals:='VARCHAR[]', favourite_activity:='VARCHAR[]', star_rating:='INTEGER'}, struct_descr:={star_rating: 'visit rating on a scale from 1 (bad) to 5 (very good)'}";
+D SELECT open_prompt('My zoo visit was fun and I loved the bears and tigets. i also had icecream') AS response;
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                                        response                                                                         │
+│                                                                         varchar                                                                         │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ {"summary": "A short summary of your recent zoo visit activity.", "favourite_animals": ["bears", "tigers"], "favourite_activity": ["icecream"], "sta …  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+```sql
+D LOAD json;                                      ^
+D WITH response AS (SELECT open_prompt('My zoo visit was fun and I loved the bears and tigets. i also had icecream') AS response) SELECT json_structure(response) FROM response;
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                          json_structure(response)                                          │
+│                                                    json                                                    │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ {"summary":"VARCHAR","favourite_animals":"VARCHAR","favourite_activity":"VARCHAR","star_rating":"UBIGINT"} │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 <br>
