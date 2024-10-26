@@ -56,12 +56,13 @@ For smaller models, the `system_prompt` can be used to request JSON in _best-eff
 SELECT open_prompt('I want ice cream', system_prompt := '{
        "type": "object",
        "properties": {
-            summary: 'VARCHAR',
-            favourite_animals:='VARCHAR[]',
-            favourite_activity:='VARCHAR[]',
-            star_rating:='INTEGER'},
-            struct_descr:={star_rating: 'rating on a scale from 1 (bad) to 5 (very good)'}
-        ');
+            "summary": { "type": "string" },
+            "favourite_animals": { "type": "array" },
+            "favourite_activity": { "type": "aray" },
+            "star_rating": { "type": "number" }
+       },
+       "struct_descr": {"star_rating": "rating on a scale from 1 (bad) to 5 (best)"}
+');
 
 D SELECT open_prompt('My zoo visit was fun and I loved the bears and tigers. i also had icecream') AS response;
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
