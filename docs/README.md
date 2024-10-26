@@ -1,7 +1,7 @@
 <img src="https://github.com/user-attachments/assets/46a5c546-7e9b-42c7-87f4-bc8defe674e0" width=250 />
 
 # DuckDB Open Prompt Extension
-This very experimental extension to query OpenAI compatible API endpoints such as Ollama
+Simple extension to query OpenAI Completion API endpoints such as Ollama
 
 > Experimental: USE AT YOUR OWN RISK!
 
@@ -12,14 +12,17 @@ This very experimental extension to query OpenAI compatible API endpoints such a
 - `set_model_name(model_name)`
 
 ### Settings
+Setup the completions API configuration w/ optional auth token and model name
 ```sql
-SELECT set_api_token('your_api_key_here');
-SELECT set_api_url('http://localhost:11434/v1/chat/completions');
+SET VARIABLE openprompt_api_url = 'http://localhost:11434/v1/chat/completions';
+SET VARIABLE openprompt_api_token = 'your_api_key_here';
+SET VARIABLE openprompt_model_name = 'qwen2.5:0.5b';
+
 ```
 
 ### Usage
 ```sql
-D SELECT open_prompt('Write a one-line poem about ducks', 'qwen2.5:0.5b') AS response;
+D SELECT open_prompt('Write a one-line poem about ducks') AS response;
 ┌────────────────────────────────────────────────┐
 │                    response                    │
 │                    varchar                     │
