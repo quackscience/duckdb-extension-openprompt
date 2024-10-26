@@ -201,7 +201,6 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
             request_body += "{\"role\":\"system\",\"content\":\"You are a helpful assistant.\"},";
             request_body += "{\"role\":\"user\",\"content\":\"" + user_prompt.GetString() + "\"}";
             request_body += "]}";
-            printf("%s\n", request_body.c_str());
 
 
             try {
