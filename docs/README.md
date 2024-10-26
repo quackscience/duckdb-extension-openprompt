@@ -50,10 +50,10 @@ SELECT open_prompt('I want ice cream', json_schema := '{
      }');
 ```
 
-> For smaller models, the schema is injected in the promp in _best-effort_ mode
+For smaller models, the `system_prompt` can be used to request JSON in _best-effort_ mode
 
 ```sql
-SELECT open_prompt('I want ice cream', json_schema := '{
+SELECT open_prompt('I want ice cream', system_prompt := '{
        "type": "object",
        "properties": {
             summary: 'VARCHAR',
