@@ -32,7 +32,7 @@ D SELECT open_prompt('Write a one-line poem about ducks') AS response;
 ```
 
 #### JSON Structured Output
-For supported models you can request structured JSON output by providing a schema. 
+For supported models you can request structured JSON output by providing a schema
 
 ```sql
 SET VARIABLE openprompt_api_url = 'http://localhost:11434/v1/chat/completions';
@@ -50,30 +50,22 @@ SELECT open_prompt('I want ice cream', json_schema := '{
      }');
 ```
 
-For smaller models, the `system_prompt` can be used to request JSON in _best-effort_ mode
+For smaller models the `system_prompt` can be used to request JSON schema in _best-effort_ mode
 
 ```sql
-SELECT open_prompt('I want ice cream', system_prompt := '{
-       "type": "object",
-       "properties": {
-            "summary": { "type": "string" },
-            "favourite_animals": { "type": "array" },
-            "favourite_activity": { "type": "aray" },
-            "star_rating": { "type": "number" }
-       },
-       "struct_descr": {"star_rating": "rating on a scale from 1 (bad) to 5 (best)"}
-');
-
-D SELECT open_prompt('My zoo visit was fun and I loved the bears and tigers. i also had icecream') AS response;
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ response │
-│ varchar │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ {"summary": "A short summary of your recent zoo visit activity.", "favourite_animals": ["bears", "tigers"], "favourite_activity": ["icecream"], "star … │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
+SET VARIABLE openprompt_api_url = 'http://localhost:11434/v1/chat/completions';
+SET VARIABLE openprompt_api_token = 'your_api_key_here';
+SET VARIABLE openprompt_model_name = 'qwen2.5:1.5b';
+SELECT open_prompt('I want ice cream.', system_prompt:='The respose MUST be a JSON with the following schema: {
+           "type": "object",
+           "properties": {
+             "summary": { "type": "string" },
+             "sentiment": { "type": "string", "enum": ["pos", "neg", "neutral"] }
+           },
+           "required": ["summary", "sentiment"],
+           "additionalProperties": false
+         }');
 ```
-
 
 
 <br>
