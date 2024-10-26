@@ -5,6 +5,12 @@ Simple extension to query OpenAI Completion API endpoints such as Ollama/OpenAI/
 
 > Experimental: USE AT YOUR OWN RISK!
 
+## Installing and Loading
+```sql
+INSTALL open_prompt FROM community;
+LOAD open_prompt;
+```
+
 ### Functions
 - `open_prompt(prompt)`
 - `set_api_url(/v1/chat/completions)`
