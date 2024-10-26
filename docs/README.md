@@ -1,15 +1,19 @@
 <img src="https://github.com/user-attachments/assets/46a5c546-7e9b-42c7-87f4-bc8defe674e0" width=250 />
 
 # DuckDB Open Prompt Extension
-Simple extension to query OpenAI Completion API endpoints such as Ollama
+Simple extension to query OpenAI Completion API endpoints such as Ollama/OpenAI/etc
 
 > Experimental: USE AT YOUR OWN RISK!
 
 ### Functions
-- `open_prompt(prompt, model)`
-- `set_api_token(auth_token)`
-- `set_api_url(completions_url)`
+- `open_prompt(prompt)`
+- `set_api_url(/v1/chat/completions)`
+- `set_api_token(optional_auth_token)`
 - `set_model_name(model_name)`
+
+#### Requirements
+
+- API must support `/v1/chat/completions`
 
 ### Settings
 Setup the completions API configuration w/ optional auth token and model name
@@ -56,7 +60,8 @@ For smaller models the `system_prompt` can be used to request JSON schema in _be
 SET VARIABLE openprompt_api_url = 'http://localhost:11434/v1/chat/completions';
 SET VARIABLE openprompt_api_token = 'your_api_key_here';
 SET VARIABLE openprompt_model_name = 'qwen2.5:1.5b';
-SELECT open_prompt('I want ice cream.', system_prompt:='The respose MUST be a JSON with the following schema: {
+SELECT open_prompt('I want ice cream.',
+       system_prompt:='The respose MUST be a JSON with the following schema: {
            "type": "object",
            "properties": {
              "summary": { "type": "string" },
@@ -64,7 +69,7 @@ SELECT open_prompt('I want ice cream.', system_prompt:='The respose MUST be a JS
            },
            "required": ["summary", "sentiment"],
            "additionalProperties": false
-         }');
+       }');
 ```
 
 
@@ -84,3 +89,9 @@ Install the Nvidia container toolkit. Run Ollama inside a Docker container
 ```
 docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
 ```
+
+<br>
+
+###### Disclaimers
+
+> DuckDB ® is a trademark of DuckDB Foundation. Motherduck ® is a trademark of the Motherduck Corporation. Any trademarks, service marks, and logos mentioned or depicted are the property of their respective owners. The use of any third-party trademarks, brand names, product names, and company names is purely informative or intended as parody and does not imply endorsement, affiliation, or association with the respective owners.
