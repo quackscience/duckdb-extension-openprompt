@@ -190,13 +190,41 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
                 json_schema = args.data[info.json_schema_idx].GetValue(0).ToString();
             }
 
-            std::string request_body = "{";
-            request_body += "\"model\":\"" + model_name + "\",";
+            unique_ptr<duckdb_yyjson::yyjson_mut_doc,
+                void (*)(duckdb_yyjson::yyjson_mut_doc*)> doc(
+                    new duckdb_yyjson::yyjson_mut_doc(), &duckdb_yyjson::yyjson_mut_doc_free);
+            auto obj = duckdb_yyjson::yyjson_mut_obj(doc.get());
+            duckdb_yyjson::yyjson_mut_obj_add(obj,
+                duckdb_yyjson::yyjson_mut_str(doc.get(), "model"),
+                duckdb_yyjson::yyjson_mut_str(doc.get(), model_name.c_str())
+                );
             if (!json_schema.empty()) {
-                request_body += "\"response_format\":{\"type\":\"json_object\", \"schema\":";
-                request_body += json_schema;
-                request_body += "},";
+                auto response_format = duckdb_yyjson::yyjson_mut_obj(doc.get());
+                duckdb_yyjson::yyjson_mut_obj_add(response_format,
+                    duckdb_yyjson::yyjson_mut_str(doc.get(), "type"),
+                    duckdb_yyjson::yyjson_mut_str(doc.get(), "json_object"));
+                auto yyschema = duckdb_yyjson::yyjson_mut_raw(doc.get(), json_schema.c_str());
+                duckdb_yyjson::yyjson_mut_obj_add(response_format,
+                    duckdb_yyjson::yyjson_mut_str(doc.get(), "schema"),
+                    yyschema);
+                duckdb_yyjson::yyjson_mut_obj_add(obj,
+                    duckdb_yyjson::yyjson_mut_str(doc.get(),"response_format"),
+                    response_format);
             }
+            auto messages = duckdb_yyjson::yyjson_mut_arr(doc.get());
+            string str_messages[2][2] = {
+                {"system", "You are a helpful assistant."},
+                {"user", user_prompt.GetString()}
+            };
+            for (auto message : str_messages) {
+                if (message[1].empty()) {
+                    continue;
+                }
+                auto yymessage = duckdb_yyjson::yyjson_mut_obj(doc.get());
+
+            }
+            duckdb_yyjson::yyjson_mut_obj_add(obj, duckdb_yyjson::yyjson_mut_str(doc.get(), "messages"),
+                )
             request_body += "\"messages\":[";
             request_body += "{\"role\":\"system\",\"content\":\"You are a helpful assistant.\"},";
             request_body += "{\"role\":\"user\",\"content\":\"" + user_prompt.GetString() + "\"}";
