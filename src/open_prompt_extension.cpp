@@ -17,6 +17,14 @@
 #include "yyjson.hpp"
 
 namespace duckdb {
+    struct OpenPromptData: FunctionData {
+        unique_ptr<FunctionData> Copy() const {
+            throw std::runtime_error("OpenPromptData::Copy");
+        };
+        bool Equals(const FunctionData &other) const {
+            throw std::runtime_error("OpenPromptData::Equals");
+        };
+    };
 
 static std::pair<duckdb_httplib_openssl::Client, std::string> SetupHttpClient(const std::string &url) {
     std::string scheme, domain, path;
@@ -138,7 +146,8 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
             auto &context = state.GetContext();
             
             // Get configuration with defaults
-            std::string api_url = GetConfigValue(context, "openprompt_api_url", 
+            std::string 
+            GetConfigValue(context, "openprompt_api_url", 
                                                "http://localhost:11434/v1/chat/completions");
             std::string api_token = GetConfigValue(context, "openprompt_api_token", "");
             std::string model_name = GetConfigValue(context, "openprompt_model_name", "qwen2.5:0.5b");
@@ -150,7 +159,7 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
 
             // Construct request body
             std::string request_body = "{";
-            request_body += "\"model\":\"" + model_name + "\",";
+            request_body += "\"model\":\"" + model_name.ToString() + "\",";
             request_body += "\"messages\":[";
             request_body += "{\"role\":\"system\",\"content\":\"You are a helpful assistant.\"},";
             request_body += "{\"role\":\"user\",\"content\":\"" + user_prompt.GetString() + "\"}";
@@ -222,6 +231,7 @@ static void OpenPromptRequestFunction(DataChunk &args, ExpressionState &state, V
                 } catch (std::exception &e) {
                     throw std::runtime_error("Failed to parse response: " + std::string(e.what()));
                 }
+                throw std::runtime_error("HTTP POST error: " + std::to_string(res->status) + " - " + res->reason);
             } catch (std::exception &e) {
                 // Log error and return error message
                 return StringVector::AddString(result, "Error: " + std::string(e.what()));
@@ -237,7 +247,6 @@ static void LoadInternal(DatabaseInstance &instance) {
         {LogicalType::VARCHAR}, LogicalType::VARCHAR, OpenPromptRequestFunction));
     open_prompt.AddFunction(ScalarFunction(
         {LogicalType::VARCHAR, LogicalType::VARCHAR}, LogicalType::VARCHAR, OpenPromptRequestFunction));
-    
     ExtensionUtil::RegisterFunction(instance, open_prompt);
 
     // Register setting functions
