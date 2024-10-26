@@ -40,6 +40,7 @@ namespace duckdb {
         OpenPromptData() {
             model_idx = 0;
             json_schema_idx = 0;
+            json_system_prompt_idx = 0;
         }
     };
 
