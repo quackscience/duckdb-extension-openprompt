@@ -11,6 +11,8 @@ INSTALL open_prompt FROM community;
 LOAD open_prompt;
 ```
 
+Please make sure you are using DuckDB version 1.1.2 or higher.
+
 ### Functions
 - `open_prompt(prompt)`
 - `set_api_url(/v1/chat/completions)`
