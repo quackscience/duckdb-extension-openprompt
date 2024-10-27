@@ -19,6 +19,7 @@ LOAD open_prompt;
 
 #### Requirements
 
+- DuckDB v1.1.1 or higher
 - API must support `/v1/chat/completions`
 
 ### Settings
