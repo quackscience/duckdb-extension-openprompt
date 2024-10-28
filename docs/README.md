@@ -101,4 +101,6 @@ docker run -d --gpus=all -v ollama:/root/.ollama -p 11434:11434 --name ollama ol
 
 ###### Disclaimers
 
+* Configuration and formats loosely inspired by the [Motherduck prompt()](https://motherduck.com/docs/sql-reference/motherduck-sql-reference/ai-functions/prompt/)
+
 > DuckDB ® is a trademark of DuckDB Foundation. Motherduck ® is a trademark of the Motherduck Corporation. Any trademarks, service marks, and logos mentioned or depicted are the property of their respective owners. The use of any third-party trademarks, brand names, product names, and company names is purely informative or intended as parody and does not imply endorsement, affiliation, or association with the respective owners.
